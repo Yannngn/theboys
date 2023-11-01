@@ -17,11 +17,20 @@ def main():
     while CLOCK < FINAL_TIME:
         func_list = EXECUTION_DICT[CLOCK]
         for func, args in func_list:
-            new_call = func(*args)
+            outputs = func(*args)
 
-            if new_call is not None:
-                new_time, func, args = new_call
-                EXECUTION_DICT[new_time].append((func, args))
+            if isinstance(outputs, tuple):
+                new_time, func, args = outputs
+
+                if new_time < FINAL_TIME:
+                    EXECUTION_DICT[new_time].append((func, args))
+
+            elif isinstance(outputs, list):
+                for new_call in outputs:
+                    new_time, func, args = new_call
+
+                    if new_time < FINAL_TIME:
+                        EXECUTION_DICT[new_time].append((func, args))
 
         CLOCK += 1
 

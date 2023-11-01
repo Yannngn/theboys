@@ -30,11 +30,14 @@ class Base:
     def add_to_queue(self, hero: Hero) -> None:
         self.queue.append(hero)
 
-    def welcome_hero(self) -> None:
-        self.heroes.append(self.queue.pop(0))
+    def welcome_hero(self) -> Hero:
+        hero = self.queue.pop(0)
+        self.heroes.append(hero)
 
-    def remove(self, hero_id) -> None:
-        self.heroes.remove(hero_id)
+        return hero
+
+    def remove(self, hero: Hero) -> None:
+        self.heroes.remove(hero)
 
     def update_exp(self):
         for hero in self.heroes:
