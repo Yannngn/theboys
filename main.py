@@ -1,40 +1,48 @@
+import json
 import random
 
-from entities.world import BASES, EXECUTION_DICT, FINAL_TIME, HEROES, MISSIONS
-from events.functional import arrives, do_mission, ends
+from tqdm.auto import tqdm
+
+from src.entities.base import BASES
+from src.entities.hero import HEROES
+from src.entities.mission import MISSIONS
+from src.entities.world import FINAL_TIME
+from src.events.events import ArrivesEvent, FutureEventsList, MissionEvent
+from src.events.loggers import FinalEvent
 
 
 def main():
     CLOCK = 0
+    fel = FutureEventsList()
+    fe = FinalEvent()
+
     for hero in HEROES.values():
+        time = random.randint(0, 4320)
         base = random.choice(list(BASES.values()))
 
-        EXECUTION_DICT[hero.time].append((arrives, (hero, base, hero.time)))
+        fel.add(ArrivesEvent(time, hero, base))
 
     for mission in MISSIONS.values():
-        EXECUTION_DICT[mission.time].append((do_mission, (mission, mission.time)))
+        time = random.randint(0, FINAL_TIME)
+        fel.add(MissionEvent(time, mission))
 
-    while CLOCK < FINAL_TIME:
-        func_list = EXECUTION_DICT[CLOCK]
-        for func, args in func_list:
-            outputs = func(*args)
-
-            if isinstance(outputs, tuple):
-                new_time, func, args = outputs
-
-                if new_time < FINAL_TIME:
-                    EXECUTION_DICT[new_time].append((func, args))
-
-            elif isinstance(outputs, list):
-                for new_call in outputs:
-                    new_time, func, args = new_call
-
-                    if new_time < FINAL_TIME:
-                        EXECUTION_DICT[new_time].append((func, args))
+    loop = tqdm(range(0, FINAL_TIME))
+    while CLOCK < 500:
+        fel.update(CLOCK)
 
         CLOCK += 1
 
-    ends(FINAL_TIME)
+        loop.update()
+    loop.close()
+
+    with open("logs/fel.json", "w") as f:
+        dict_ = {
+            k: [o.__class__.__name__ for o in v] for k, v in fel.event_dict.items()
+        }
+
+        json.dump(dict_, f)
+
+    fe.update()
 
 
 if __name__ == "__main__":
